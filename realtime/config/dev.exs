@@ -1,15 +1,5 @@
 import Config
 
-# Configure your database
-config :realtime, Realtime.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "realtime_dev",
-  stacktrace: true,
-  show_sensitive_data_on_connection_error: true,
-  pool_size: 10
-
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #
@@ -23,11 +13,8 @@ config :realtime, RealtimeWeb.Endpoint,
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
-  secret_key_base: "wZKqkAyuvblNH02vu7PUPqzwktNyC69+LpMrvwoV09vKUZenus/INcuMcHhwSKkH",
-  watchers: [
-    esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]},
-    tailwind: {Tailwind, :install_and_run, [:default, ~w(--watch)]}
-  ]
+  secret_key_base: "+IUGgZyJl8Nfo07WJml5x2a+JRKU2phz1RS56M5wRrOWp8fQbsRPvexruJyITJs9",
+  watchers: []
 
 # ## SSL Support
 #
@@ -52,16 +39,6 @@ config :realtime, RealtimeWeb.Endpoint,
 # configured to run both http and https servers on
 # different ports.
 
-# Watch static and templates for browser reloading.
-config :realtime, RealtimeWeb.Endpoint,
-  live_reload: [
-    patterns: [
-      ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
-      ~r"priv/gettext/.*(po)$",
-      ~r"lib/realtime_web/(controllers|live|components)/.*(ex|heex)$"
-    ]
-  ]
-
 # Enable dev routes for dashboard and mailbox
 config :realtime, dev_routes: true
 
@@ -74,6 +51,3 @@ config :phoenix, :stacktrace_depth, 20
 
 # Initialize plugs at runtime for faster development compilation
 config :phoenix, :plug_init_mode, :runtime
-
-# Disable swoosh api client as it is only required for production adapters.
-config :swoosh, :api_client, false

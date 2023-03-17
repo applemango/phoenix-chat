@@ -10,12 +10,8 @@ defmodule Realtime.Application do
     children = [
       # Start the Telemetry supervisor
       RealtimeWeb.Telemetry,
-      # Start the Ecto repository
-      Realtime.Repo,
       # Start the PubSub system
       {Phoenix.PubSub, name: Realtime.PubSub},
-      # Start Finch
-      {Finch, name: Realtime.Finch},
       # Start the Endpoint (http/https)
       RealtimeWeb.Endpoint
       # Start a worker by calling: Realtime.Worker.start_link(arg)
