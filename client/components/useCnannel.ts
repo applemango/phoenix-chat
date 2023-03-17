@@ -1,14 +1,17 @@
 import {Socket, Channel} from "phoenix"
 import { useEffect, useState } from "react";
 
-const useChannel = (socket: Socket | null) => {
+const useChannel = (
+    socket: Socket | null,
+    room: string = "lobby"
+) => {
     const [channel, setChannel] = useState<Channel | null>(null);
     useEffect(() => {
         if(!process.browser)
             return
         if(!socket)
             return
-        let channel = socket.channel("room:lobby", {})
+        let channel = socket.channel(`room:${room}`, {})
         channel.join()
             .receive("ok", resp => { console.log("Joined successfully", resp) })
             .receive("error", resp => { console.log("Unable to join", resp) })

@@ -9,18 +9,18 @@ const inter = Inter({ subsets: ['latin'] })
 import {Socket} from "phoenix"
 import useSocket from '@/components/useSocket'
 import useChannel from '@/components/useCnannel'
+import useChannelOnEvent from '@/components/useChannelOnEvent'
 
 export default function Home() {
   const [msg, setMsg] = useState("")
-  const socket = useSocket()
+
+  const socket = useSocket("apple")
   const channel = useChannel(socket)
-  useEffect(() => {
-    if(!channel) return
-    channel.on("new_msg", msg => {
-      console.log(msg)
-    })
-  },[channel])
-  
+
+  useChannelOnEvent("new_msg", msg => {
+    console.log(msg)
+  }, channel)
+
   return <div>
     <input type="text"
       value={msg}
