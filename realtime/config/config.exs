@@ -15,7 +15,7 @@ config :realtime, RealtimeWeb.Endpoint,
     layout: false
   ],
   pubsub_server: Realtime.PubSub,
-  live_view: [signing_salt: "depStqZ2"]
+  live_view: [signing_salt: "Rrtq665O"]
 
 # Configures Elixir's Logger
 config :logger, :console,

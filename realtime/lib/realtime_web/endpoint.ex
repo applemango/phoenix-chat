@@ -1,13 +1,17 @@
 defmodule RealtimeWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :realtime
 
+
+  socket "/socket", RealtimeWeb.UserSocket,
+    websocket: true,
+    longpoll: false
   # The session will be stored in the cookie and signed,
   # this means its contents can be read but not tampered with.
   # Set :encryption_salt if you would also like to encrypt it.
   @session_options [
     store: :cookie,
     key: "_realtime_key",
-    signing_salt: "mWDQgafV",
+    signing_salt: "KcVWDUcR",
     same_site: "Lax"
   ]
 

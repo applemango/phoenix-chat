@@ -13,7 +13,7 @@ config :realtime, RealtimeWeb.Endpoint,
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
-  secret_key_base: "+IUGgZyJl8Nfo07WJml5x2a+JRKU2phz1RS56M5wRrOWp8fQbsRPvexruJyITJs9",
+  secret_key_base: "w/FuMsHDiQQxaqElPPFVuaeZq0vyjc58CpGC90lX8RyXS5GOG2OowAhzqiemXCdH",
   watchers: []
 
 # ## SSL Support

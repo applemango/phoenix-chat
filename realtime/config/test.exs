@@ -4,7 +4,7 @@ import Config
 # you can enable the server option below.
 config :realtime, RealtimeWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
-  secret_key_base: "86BkKUH6RaCESyhhkRhqEOJAg5ZKRIh4o5I9xigtXmTV3hG2+00Ngt3RQ4y7juc7",
+  secret_key_base: "Bju0yQeaAfAqcI/fimUR1lk3QAuVFoVbWMgdNvpbiz1WZtba+oA4NThdZ5Ifvc9l",
   server: false
 
 # Print only warnings and errors during test
