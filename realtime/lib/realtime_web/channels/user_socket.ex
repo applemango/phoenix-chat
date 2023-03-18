@@ -1,6 +1,8 @@
 defmodule RealtimeWeb.UserSocket do
   use Phoenix.Socket
 
+  use RealtimeWeb.Token
+
   # A Socket handler
   #
   # It's possible to control the websocket connection and
@@ -35,8 +37,32 @@ defmodule RealtimeWeb.UserSocket do
   # See `Phoenix.Token` documentation for examples in
   # performing token verification on connect.
   @impl true
-  def connect(_params, socket, _connect_info) do
-    {:ok, socket}
+  def connect(%{"token" => token}, socket, _connect_info) do
+    #signer = Joken.Signer.create("HS256", "secret")
+
+    #{:ok, token, claims} = RealtimeWeb.Token.generate_and_sign(%{}, signer)
+    #IO.puts(token)
+    #IO.puts(claims)
+    {:ok, claims} = RealtimeWeb.Token.verify_and_validate(token)
+    IO.puts(claims["sub"])
+    case RealtimeWeb.Token.verify_and_validate(token) do
+      {:ok, claims} -> {:ok, socket}
+      _ -> :error
+    end
+    #try do
+    #  {:ok, claims} = RealtimeWeb.Token.verify_and_validate(token)
+    #  {:ok, socket}
+    #raise
+    #  :error
+    #end
+
+    #IO.puts(claims)
+
+    #if token != "apple" do
+    #  :error
+    #else
+    #  {:ok, socket}
+    #end
   end
 
   # Socket id's are topics that allow you to identify all sockets for a given user:
