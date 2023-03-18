@@ -44,6 +44,16 @@ async fn main() -> std::io::Result<()> {
         )",
         ()
     ).unwrap();
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS message (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            location STRING,
+            user_id INTEGER,
+            body STRING,
+            FOREIGN KEY(user_id) REFERENCES user (id)
+        )",
+        ()
+    ).unwrap();
     env_logger::init_from_env(Env::default().default_filter_or("info"));
     HttpServer::new(|| {
         let cors = Cors::default()

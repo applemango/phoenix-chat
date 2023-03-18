@@ -10,18 +10,55 @@ import {Socket} from "phoenix"
 import useSocket from '@/components/useSocket'
 import useChannel from '@/components/useCnannel'
 import useChannelOnEvent from '@/components/useChannelOnEvent'
-
+import useAuth from '@/components/useLogin'
+import { useRouter } from 'next/router'
+import { Room } from '@/components/chat'
 export default function Home() {
   const [msg, setMsg] = useState("")
+  const [msgs, setMsgs] = useState<Array<string>>([])
 
-  const [socket, connected, reset] = useSocket("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2NzkwNTk3OTMsImV4cCI6MTY3OTA2MDY5MywibmJmIjoxNjc5MDU5NzkzLCJzdWIiOiIxIiwianRpIjoiYTkzOWZjNDgtZmJkNS00Njc4LWE5MTctM2VkZGI0ZWJhYjJkIiwicmVmcmVzaCI6ZmFsc2V9.b7p7IGGmCHg-CNyX9qdtTtba8Imj95s6mH42oAOIfPk")
-  const channel = useChannel(socket)
+  const [auth, login] = useAuth()
+  
+  const [socket, connected, resetSocket] = useSocket("")
+  const [channel, resetChannel] = useChannel(socket, "lobby")
 
-  useChannelOnEvent("new_msg", msg => {
+  const router = useRouter()
+
+  useEffect(()=> {
+    if(!auth || !auth.token)
+      return
+    resetSocket(auth.token)
+  },[login])
+
+  useEffect(()=> {
+    if(auth && !login)
+      router.push("/login")
+  })
+
+  return <div>
+    <Room channel={channel} room={"new_msg"} />
+    <button onClick={()=> {
+      resetChannel("test")
+    }}>change</button>
+  </div>
+  /*useChannelOnEvent("new_msg", msg => {
+    setMsgs((msgs) => [...msgs, msg.body])
     console.log(msg)
   }, channel)
 
+  useEffect(()=> {
+    if(!auth || !auth.token)
+      return
+    reset(auth.token)
+  },[login])
+
+  useEffect(()=> {
+    if(auth && !login)
+      router.push("/login")
+  })
+
   return <div>
+    {<p>{connected.toString()} {login.toString()}</p>
     <input type="text"
       value={msg}
       onChange={(e: any)=> setMsg(e.target.value)}
@@ -32,8 +69,12 @@ export default function Home() {
       channel.push("new_msg", {body: msg})
     }}>send</button>
     <button onClick={()=> {
-      reset("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJKb2tlbiIsImV4cCI6MTY3OTA2MzM3OSwiaWF0IjoxNjc5MDU2MTc5LCJpc3MiOiJKb2tlbiIsImp0aSI6IjJ0Nmo5Y240OThqcXU5N241azAwMDAxNCIsIm5iZiI6MTY3OTA1NjE3OX0.tUCCx9fmWMh69XrD2y7OB1Z1IXKQY5aj_3eTSw3nWuM")
+      reset("")
     }}>reset</button>
-    <p>{connected.toString()}</p>
-  </div>
+    
+    <div>
+      {msgs.map((msg, i) => <p key={i}>{msg}</p>)}
+  </div>}
+  
+  </div>*/
 }

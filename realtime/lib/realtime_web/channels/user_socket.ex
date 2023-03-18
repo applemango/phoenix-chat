@@ -44,9 +44,17 @@ defmodule RealtimeWeb.UserSocket do
     #IO.puts(token)
     #IO.puts(claims)
     {:ok, claims} = RealtimeWeb.Token.verify_and_validate(token)
-    IO.puts(claims["sub"])
+    #IO.puts(claims["refresh"])
+    #if claims["refresh"] != false do
+    #  IO.puts("error")
+    #  :error
+    #end
+    #IO.puts(claims["refresh"] == false)
     case RealtimeWeb.Token.verify_and_validate(token) do
-      {:ok, claims} -> {:ok, socket}
+      {:ok, claims} -> case claims["refresh"] do
+        false -> {:ok, socket}
+        _ -> :error
+      end
       _ -> :error
     end
     #try do
