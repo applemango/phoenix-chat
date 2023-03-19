@@ -1,4 +1,4 @@
-import { post } from "./fetch";
+import { get, post } from "./fetch";
 import { parseJwt } from "./token";
 
 export class Auth {
@@ -74,6 +74,33 @@ export class Auth {
         this.refreshToken = res.data.refresh_token
         this.save()
         return true
+    }
+    async get(url: string) {
+        if(!this.r) return [false, false]
+        if(!this.a) {
+            const l = await this.refresh()
+            if(!l) return [false, false]
+        }
+        const [res, status] = await get(url, {
+            header: {
+                Authorization: `Bearer ${this.a}`
+            }
+        })
+        return [res, status]
+    }
+    async post(url: string, body: any) {
+        if(!this.r) return [false, false]
+        if(!this.a) {
+            const l = await this.refresh()
+            if(!l) return [false, false]
+        }
+        const [res, status] = await post(url, {
+            header: {
+                Authorization: `Bearer ${this.a}`
+            },
+            data: body
+        })
+        return [res, status]
     }
     load() {
         let r = localStorage.getItem("refreshToken");

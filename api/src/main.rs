@@ -1,3 +1,6 @@
+/*
+ * unwrapを多用しているためerrorが出た場合panic!に陥りresponse自体が帰ってこないことが多いですがめんどくさいので使っています
+ */
 use actix_web::{get, post, web, App, HttpServer, Responder, HttpResponse, HttpRequest, middleware::Logger};
 use jwt_simple::prelude::*;
 use serde::{Serialize, Deserialize};
@@ -12,9 +15,12 @@ use crypto::digest::Digest;
 
 mod token;
 mod structs;
+mod messages;
 
 use crate::structs::*;
 use crate::token::*;
+use crate::messages::*;
+use crate::messages::add_message;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -72,6 +78,11 @@ async fn main() -> std::io::Result<()> {
                 web::scope("/user")
                     .service(create_user)
                     .service(logout_user)
+            )
+            .service(
+                web::scope("/messages")
+                    .route("/{space_name}", web::post().to(add_message))
+                    .route("/{space_name}", web::get().to(get_messages))
             )
             .service(hello)
     })

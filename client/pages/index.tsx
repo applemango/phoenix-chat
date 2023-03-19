@@ -13,6 +13,7 @@ import useChannelOnEvent from '@/components/useChannelOnEvent'
 import useAuth from '@/components/useLogin'
 import { useRouter } from 'next/router'
 import { Room } from '@/components/chat'
+import { RoomsMenu } from '@/components/rooms'
 export default function Home() {
   const [msg, setMsg] = useState("")
   const [msgs, setMsgs] = useState<Array<string>>([])
@@ -20,7 +21,12 @@ export default function Home() {
   const [auth, login] = useAuth()
   
   const [socket, connected, resetSocket] = useSocket("")
+  const [room, setRoom] = useState("lobby")
   const [channel, resetChannel] = useChannel(socket, "lobby")
+
+  useEffect(()=> {
+    resetChannel(room)
+  },[room])
 
   const router = useRouter()
 
@@ -35,11 +41,32 @@ export default function Home() {
       router.push("/login")
   })
 
-  return <div>
-    <Room channel={channel} room={"new_msg"} />
-    <button onClick={()=> {
-      resetChannel("test")
-    }}>change</button>
+  return <div style={{
+    display: 'flex',
+  }}>
+    <RoomsMenu onChange={(r)=> {
+      setRoom(r.name)
+    }} room={room} rooms={[
+      {
+        name: "lobby",
+        bcolor: '#19A7CE',
+        color: '#F6F1F1',
+      },
+      {
+        name: "test",
+        bcolor: '#9E4784',
+        color: '#F6F1F1'
+      },
+      {
+        name: "apple",
+        bcolor: '#eee',
+        color: '#555'
+      }]} />
+    <Room auth={auth} channel={channel} channel_name={room} room={"new_msg"} />
+    
+    {/*<button onClick={()=> {
+      setRoom((r) => r == "test" ? "lobby" : "test")
+    }}>change</button>*/}
   </div>
   /*useChannelOnEvent("new_msg", msg => {
     setMsgs((msgs) => [...msgs, msg.body])

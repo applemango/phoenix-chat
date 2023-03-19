@@ -109,3 +109,56 @@ async fn hello(req: HttpRequest) -> impl Responder {
     }
     HttpResponse::Ok().body("Hello world!")
 }
+
+pub async fn isLogin(req: HttpRequest) -> Result<TokenData, ()> {
+    let token = get_token(req);
+
+    let token_key = HS256Key::from_bytes(b"secret");
+
+    let claims = token_key.verify_token::<TokenClaims>(&token, None).unwrap();
+
+    let db_con = Connection::open("app.db").unwrap();
+
+    let uuid;
+    match claims.jwt_id {
+        Some(d) => uuid = d,
+        None => return Err(())
+    }
+
+    let sub;
+    let exp;
+    match claims.subject {
+        Some(d) => sub = d.parse::<i32>().unwrap(),
+        None => return Err(())
+    }
+    match claims.expires_at {
+        Some(d) => exp = d.as_millis(),
+        None => return Err(())
+    }
+
+    let u = match db_con.query_row("SELECT uuid FROM tokenblocklist WHERE uuid = ( ?1 )", [&uuid], |_| {
+        Ok(true)
+    }) {
+        Ok(_) => {
+            return Err(())
+        },
+        Err(_) => true
+    };
+
+    if !u {
+        return Err(())
+    }
+
+    if claims.custom.refresh {
+        return Err(())
+    }
+    let token_data = TokenData {
+        id: uuid,
+        sub: sub,
+        exp: exp,
+        TokenClaims: TokenClaims {
+            refresh: claims.custom.refresh,
+        }
+    };
+    Ok(token_data)
+}

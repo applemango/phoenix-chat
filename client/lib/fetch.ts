@@ -12,7 +12,7 @@ type optionPost = {
 
 export const get = async (link: string, options: optionGet = {
     header: {},
-}) => {
+}): Promise<[AxiosResponse, true] | [any, false]> => {
     const u = url(link);
     options.header["Content-Type"] = "application/json";
     try {
@@ -22,7 +22,7 @@ export const get = async (link: string, options: optionGet = {
             }
         )
         return [res, true];
-    } catch (e) {
+    } catch (e: any) {
         return [e, false];
     }
 }
