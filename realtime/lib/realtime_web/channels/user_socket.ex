@@ -13,6 +13,8 @@ defmodule RealtimeWeb.UserSocket do
   # pointing to the `RealtimeWeb.RoomChannel`:
   #
   channel "room:*", RealtimeWeb.RoomChannel
+
+  channel "notification:*", RealtimeWeb.NotificationChannel
   #
   # To create a channel file, use the mix task:
   #
@@ -43,7 +45,9 @@ defmodule RealtimeWeb.UserSocket do
     #{:ok, token, claims} = RealtimeWeb.Token.generate_and_sign(%{}, signer)
     #IO.puts(token)
     #IO.puts(claims)
-    {:ok, claims} = RealtimeWeb.Token.verify_and_validate(token)
+
+    #{:ok, claims} = RealtimeWeb.Token.verify_and_validate(token)
+
     #IO.puts(claims["refresh"])
     #if claims["refresh"] != false do
     #  IO.puts("error")

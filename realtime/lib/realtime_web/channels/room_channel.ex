@@ -17,7 +17,10 @@ defmodule RealtimeWeb.RoomChannel do
   def handle_in("new_msg", %{"body" => body}, socket) do
     #push socket, socket.topic, %{body: body}
     #push socket, "new_msg", %{body: body}
+
+    #RealtimeWeb.Endpoint.broadcast "room:lobby", "new_msg", %{body: body}
     broadcast!(socket, "new_msg", %{body: body})
+
     #broadcast! "room:lobby", "new_msg", %{body: body}
     #IO.puts(socket.topic)
     {:noreply, socket}

@@ -7,19 +7,10 @@ const useChannel = (
 ): [Channel | null, (room: string)=> void] => {
     const [channel, setChannel] = useState<Channel | null>(null);
     useEffect(() => {
-        if(!process.browser)
-            return
-        if(!socket)
-            return
-        let channel = socket.channel(`room:${room}`, {})
-        channel.join()
-            .receive("ok", resp => { console.log("Joined successfully", resp) })
-            .receive("error", resp => { console.log("Unable to join", resp) })
-        setChannel(channel)
+        reset(room)
     },[socket])
     const reset = (room: string) => {
-        if(!socket)
-            return
+        if(!socket || !process.browser) return
         channel?.leave()
             .receive("ok", resp => { console.log("Leaved successfully", resp) })
             .receive("error", resp => { console.log("Unable to leave", resp) })
@@ -31,4 +22,4 @@ const useChannel = (
     }
     return [channel, reset]
 }
-export default useChannel;;
+export default useChannel;

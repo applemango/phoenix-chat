@@ -84,7 +84,7 @@ export const Room = ({auth, channel, room, channel_name}:{
                 borderTop: '1px solid #eee'
             },
             element: {
-                height: 54,
+                height: 64,
                 width: "96%",
                 fontSize: 32,
                 backgroundColor: '#fff',
@@ -95,7 +95,7 @@ export const Room = ({auth, channel, room, channel_name}:{
             }
         }} value={input} onChange={setInput} onSubmit={async (value)=> {
             if(!(channel && value)) return
-            channel.push(room, {body: value})
+            channel.push(room, {body: value, token: auth?.a})
             if(auth) {
                 await auth.post(`/messages/${channel_name}`, {body: value})
             }

@@ -15,6 +15,11 @@ export class Auth {
         this.password = pass;
 
     }
+    get rd() {
+        if(!this.r)
+            return null;
+        return parseJwt(this.r)
+    }
     get a() {
         let a_  = this.token;
         if (!(a_ && Date.now() >= parseJwt(a_).exp *1000) && a_) {
