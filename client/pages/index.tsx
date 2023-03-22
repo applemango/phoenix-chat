@@ -19,41 +19,21 @@ import { message, room } from '@/lib/msg'
 import { friend } from '@/lib/private'
 
 export default function Home() {
-
-  const [rooms, setRooms] = useState<Array<room>>([
-    {
-      name: "lobby",
-      bcolor: '#19A7CE',
-      color: '#F6F1F1',
-      notification: 0
-    },
-    {
-      name: "test",
-      bcolor: '#9E4784',
-      color: '#F6F1F1',
-      notification: 0
-    },
-    {
-      name: "apple",
-      bcolor: '#eee',
-      color: '#555',
-      notification: 0
-    }
-  ])
+  const [rooms, setRooms] = useState<Array<room>>([{name: "lobby",bcolor: '#19A7CE',color: '#F6F1F1',notification: 0},{name: "test",bcolor: '#9E4784',color: '#F6F1F1',notification: 0},{name: "apple",bcolor: '#eee',color: '#555',notification: 0}])
 
   const [auth, login] = useAuth()
 
   const [privateRoom, setPrivateRoom] = useState<boolean>(false)
   
   const [socket, connected, resetSocket] = useSocket("")
-  const [room, setRoom] = useState("lobby")
-  const [channel, resetChannel] = useChannel(socket, "lobby")
+  const [room, setRoom] = useState("")
+  const [channel, resetChannel] = useChannel(socket, "")
   const [nchannel, resetNotification] = useNotification(socket, "lobby", ["lobby"])
 
   const [friends, setFriends] = useState<Array<friend>>([])
 
   useEffect(()=> {
-    if(privateRoom)
+    if(privateRoom || !room)
       return
     resetChannel(room)
   },[room])
@@ -67,12 +47,6 @@ export default function Home() {
 
     const a = async () => {
       const [res, status] = await auth.get("/user/friends")
-      if(!status) return
-      console.log(res.data)
-      if(res.data.length) {
-        const [resA, statusA] = await auth.get(`/user/friends/${res.data[0].user_id}/token`)
-        console.log(resA)
-      }
       setFriends(res.data)
     };a()
   },[login])
@@ -111,7 +85,11 @@ export default function Home() {
   return <div style={{
     display: 'flex',
   }}>
-    <RoomsMenu onChange={async (d: any, t)=> {
+    <RoomsMenu onChange={async (d?: any, t?: boolean)=> {
+      if(!d) {
+        setRoom("")
+        return
+      }
       if(!t) {
         setPrivateRoom(false)
         setRoom(d.name)
@@ -132,6 +110,9 @@ export default function Home() {
       setRoom(d.room)
       resetChannel(d.room, res.data.token)
     }} users={friends} room={room} rooms={rooms} />
-    <Room auth={auth} channel={channel} channel_name={room} room={"new_msg"} />
+    {!room 
+      ? <div></div>
+      : <Room auth={auth} channel={channel} channel_name={room} room={"new_msg"} />
+    }
   </div>
 }

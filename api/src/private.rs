@@ -41,16 +41,85 @@ pub async fn get_friends(req: HttpRequest) -> impl Responder {
     HttpResponse::Ok().json(friends)
 }
 
-pub async fn accept_friend(req: HttpRequest) -> impl Responder {
+pub async fn request_friend(req: HttpRequest) -> impl Responder {
+    let friend_id: i32 = req.clone().match_info().load().unwrap();
+    let claims = match isLogin(req.clone()).await {
+        Ok(token) => token,
+        Err(_) => return HttpResponse::Unauthorized().body("invalid token"),
+    };
+    let conn = Connection::open("app.db").unwrap();
 
-    HttpResponse::Ok()
+    let _ = match conn.query_row("
+    SELECT room, requester, responser 
+        FROM friend
+        WHERE
+            (requester = ?1 AND responser = ?2)
+            OR
+            (responser = ?1 AND requester = ?2)", 
+    [claims.sub, friend_id], | _ | {Ok(true)}) {
+        Ok(_) => return HttpResponse::BadRequest().body("request...?, why"),
+        Err(_) => true
+    };
+
+    let mut stmt = conn.prepare("
+        INSERT INTO friend (
+            room,
+            requester,
+            responser,
+            status,
+        )
+        VALUES (?1, ?2, ?3, ?4)
+    ").unwrap();
+
+    let _ = stmt.execute([
+        Uuid::new_v4().to_string(),
+        claims.sub.to_string(),
+        friend_id.to_string(),
+        0.to_string()
+    ]).unwrap();
+
+    HttpResponse::Ok().body("request successfully")
+}
+
+pub async fn accept_friend(req: HttpRequest) -> impl Responder {
+    let friend_id: i32 = req.clone().match_info().load().unwrap();
+    let claims = match isLogin(req.clone()).await {
+        Ok(token) => token,
+        Err(_) => return HttpResponse::Unauthorized().body("invalid token"),
+    };
+    let conn = Connection::open("app.db").unwrap();
+
+    let _ = match conn.query_row("
+    SELECT room, requester, responser FROM friend WHERE responser = ?1 AND requester = ?2 AND status = 0", 
+    [claims.sub, friend_id], | _ | {Ok(true)}) {
+        Ok(_) => true,
+        Err(_) => return HttpResponse::BadRequest().body("Hahaha")
+    };
+
+    let _ = conn.execute("UPDATE friend SET  status = 1 WHERE responser = ?1 AND requester = ?2", [claims.sub, friend_id]).unwrap();
+
+    HttpResponse::Ok().body("now, you have new friends!!!")
 }
 pub async fn reject_friend(req: HttpRequest) -> impl Responder {
-    HttpResponse::Ok()
+    let friend_id: i32 = req.clone().match_info().load().unwrap();
+    let claims = match isLogin(req.clone()).await {
+        Ok(token) => token,
+        Err(_) => return HttpResponse::Unauthorized().body("invalid token"),
+    };
+    let conn = Connection::open("app.db").unwrap();
+
+    let _ = match conn.query_row("
+    SELECT room, requester, responser FROM friend WHERE responser = ?1 AND requester = ?2 AND status = 0", 
+    [claims.sub, friend_id], | _ | {Ok(true)}) {
+        Ok(_) => true,
+        Err(_) => return HttpResponse::BadRequest().body("Hahaha")
+    };
+
+    let _ = conn.execute("UPDATE friend SET  status = 2 WHERE responser = ?1 AND requester = ?2", [claims.sub, friend_id]).unwrap();
+
+    HttpResponse::Ok().body("what?, no way")
 }
-pub async fn request_friend(req: HttpRequest) -> impl Responder {
-    HttpResponse::Ok()
-}
+
 pub async fn get_friend_token(req: HttpRequest) -> impl Responder {
     let friend_id: i32 = req.clone().match_info().load().unwrap();
     let claims = match isLogin(req.clone()).await {

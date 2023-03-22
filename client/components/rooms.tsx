@@ -6,7 +6,7 @@ export const RoomsMenu = ({rooms, users, room, onChange}:{
     rooms: Array<room>,
     users: Array<friend>
     room: string,
-    onChange: (room: room | friend, friend: boolean) => void,
+    onChange: (room?: room | friend, friend?: boolean) => void,
 }) => {
     return <div style={{
         backgroundColor: '#fff',
@@ -14,7 +14,27 @@ export const RoomsMenu = ({rooms, users, room, onChange}:{
         padding: 4,
         position: 'relative',
         zIndex: 2,
+        height: '100vh',
     }}>
+        <div style={{
+            marginRight: 6,
+            marginLeft: 6,
+            width: 48,
+            height: 48,
+            backgroundColor: '#eee',
+            borderRadius: 4,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer'
+        }} onClick={()=> onChange()}/>
+        <div style={{
+            width: 'calc(100% - 12px)',
+            height: 2,
+            borderRadius: 10,
+            backgroundColor: '#0002',
+            margin: '8px 6px'
+        }} />
         {users.map((u, i)=> <div key={i} style={{
             width: 48,
             height: 48,
@@ -26,8 +46,9 @@ export const RoomsMenu = ({rooms, users, room, onChange}:{
         </div>)}
         <div style={{
             width: 'calc(100% - 12px)',
-            height: 1,
-            backgroundColor: '#0005',
+            height: 2,
+            borderRadius: 10,
+            backgroundColor: '#0002',
             margin: '8px 6px'
         }} />
         {rooms.map((r, i)=> <div key={i} style={{

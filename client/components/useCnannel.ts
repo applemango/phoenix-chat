@@ -11,6 +11,8 @@ const useChannel = (
     useEffect(() => {
         if(!reload)
             return
+        if(!room)
+            return
         reset(room, undefined, privates)
     },[socket])
     const reset = (room: string, token?: string, privates?: boolean) => {
