@@ -16,11 +16,13 @@ use crypto::digest::Digest;
 mod token;
 mod structs;
 mod messages;
+mod private;
 
 use crate::structs::*;
 use crate::token::*;
 use crate::messages::*;
 use crate::messages::add_message;
+use crate::private::*;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -30,6 +32,7 @@ async fn main() -> std::io::Result<()> {
         .with_jwt_id(Uuid::new_v4().to_string());
     let access =  token_key.authenticate(claims).unwrap();
     println!("example token: {}", access);
+    println!("example uuid: {}", Uuid::new_v4().to_string());
 
     let conn = Connection::open("app.db").unwrap();
     conn.execute(
@@ -60,6 +63,23 @@ async fn main() -> std::io::Result<()> {
         )",
         ()
     ).unwrap();
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS friend (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            room STRING,
+            requester INTEGER,
+            responser INTEGER,
+            /*
+             * status 0: no response
+             * status 1: successful
+             * status 2: rejected
+             */
+            status INTEGER,
+            FOREIGN KEY (requester) REFERENCES user (id),
+            FOREIGN KEY (responser) REFERENCES user (id)
+        )",
+        ()
+    ).unwrap();
     env_logger::init_from_env(Env::default().default_filter_or("info"));
     HttpServer::new(|| {
         let cors = Cors::default()
@@ -78,6 +98,18 @@ async fn main() -> std::io::Result<()> {
                 web::scope("/user")
                     .service(create_user)
                     .service(logout_user)
+                    .service(
+                        web::scope("/friends")
+                            .route("", web::get().to(get_friends))
+                            .service(
+                                web::scope("/{friend_id}")
+                                    .route("/accept", web::post().to(accept_friend))
+                                    .route("/reject", web::post().to(reject_friend))
+                                    .route("/request", web::post().to(request_friend))
+                                    .route("/token", web::get().to(get_friend_token))
+                            )
+                        
+                    )
             )
             .service(
                 web::scope("/messages")

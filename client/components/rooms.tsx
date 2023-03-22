@@ -1,9 +1,12 @@
 import { room } from "@/lib/msg"
+import { friend } from "@/lib/private"
+import { SingleColorIcon } from "./chat"
 
-export const RoomsMenu = ({rooms, room, onChange}:{
+export const RoomsMenu = ({rooms, users, room, onChange}:{
     rooms: Array<room>,
+    users: Array<friend>
     room: string,
-    onChange: (room: room) => void
+    onChange: (room: room | friend, friend: boolean) => void,
 }) => {
     return <div style={{
         backgroundColor: '#fff',
@@ -12,6 +15,21 @@ export const RoomsMenu = ({rooms, room, onChange}:{
         position: 'relative',
         zIndex: 2,
     }}>
+        {users.map((u, i)=> <div key={i} style={{
+            width: 48,
+            height: 48,
+            marginLeft: 6,
+            marginRight: 6,
+            cursor: 'pointer'
+        }} onClick={()=> onChange(u, true)}>
+            <SingleColorIcon size={48} id={u.user_id} />
+        </div>)}
+        <div style={{
+            width: 'calc(100% - 12px)',
+            height: 1,
+            backgroundColor: '#0005',
+            margin: '8px 6px'
+        }} />
         {rooms.map((r, i)=> <div key={i} style={{
             height: 48,
             width: 48,
@@ -24,7 +42,7 @@ export const RoomsMenu = ({rooms, room, onChange}:{
             border: room == r.name ? '3px solid #404258' : 'none',
             cursor: 'pointer',
             position: 'relative'
-        }} onClick={()=> onChange(r)}>
+        }} onClick={()=> onChange(r, false)}>
             <p style={{
                 color: r.color || '#666',
                 textTransform: 'uppercase',

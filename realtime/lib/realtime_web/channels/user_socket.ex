@@ -15,6 +15,8 @@ defmodule RealtimeWeb.UserSocket do
   channel "room:*", RealtimeWeb.RoomChannel
 
   channel "notification:*", RealtimeWeb.NotificationChannel
+
+  channel "private:*", RealtimeWeb.PrivateChannel
   #
   # To create a channel file, use the mix task:
   #

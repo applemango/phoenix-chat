@@ -48,3 +48,26 @@ pub struct DBMessage {
     pub user_id: i32,
     pub body: String,
 }
+
+#[derive(Serialize)]
+pub struct DBFriend {
+    pub room: String,
+    pub requester: i32,
+    pub responser: i32,
+}
+
+#[derive(Serialize)]
+pub struct FriendsResponse {
+    pub room: String,
+    pub user_id: i32,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct FriendTokenClaims {
+    pub room: String,
+}
+
+#[derive(Serialize)]
+pub struct FriendTokenResponse {
+    pub token: String,
+}

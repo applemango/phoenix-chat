@@ -6,5 +6,7 @@ export type room = {
 }
 
 export type message = {
-    body: string
+    body: string,
+    location: string,
+    user_id: string
 }

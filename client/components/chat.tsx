@@ -4,11 +4,38 @@ import { Channel } from "phoenix"
 import { useEffect, useState } from "react"
 import useChannelOnEvent from "./useChannelOnEvent"
 
+export const SingleColorIcon = ({id, size = 38}:{
+    id: number | string,
+    size?: number
+}) => {
+    const colors = ['#F9ED69','#F08A5D','#B83B5E','#6A2C70',]
+    const color = colors[Number(id) + 1 % colors.length]
+    return <div style={{
+        backgroundColor: color,
+        width: size,
+        height: size,
+        borderRadius: '100%'
+    }} />
+}
+
 export const Message = ({message}:{
     message: message
 }) => {
-    return <div>
-        <p>{message.body}</p>
+    return <div style={{
+        display: 'flex',
+        padding: 2
+    }}>
+        <div style={{
+            marginRight: 10
+        }}>
+            <SingleColorIcon id={message.user_id} />
+        </div>
+        <div>
+            <p style={{
+                fontWeight: 'bold'
+            }}>{message.user_id}</p>
+            <p>{message.body}</p>
+        </div>
     </div>
 }
 
@@ -59,6 +86,7 @@ export const Room = ({auth, channel, room, channel_name}:{
         if(!auth) return
         const [res, status] = await auth.get(`/messages/${channel_name}`)
         if(!status) return
+        console.log(res.data)
         setMessages(res.data)
     };a()},[channel])
     return <div style={{
@@ -94,8 +122,12 @@ export const Room = ({auth, channel, room, channel_name}:{
                 resize: "none"
             }
         }} value={input} onChange={setInput} onSubmit={async (value)=> {
-            if(!(channel && value)) return
-            channel.push(room, {body: value, token: auth?.a})
+            if(!(channel && value && auth)) return
+            if(!auth.a) {
+                const res = await auth.refresh()
+                if(!(res && auth.a)) return
+            }
+            channel.push(room, {body: value, token: auth.a})
             if(auth) {
                 await auth.post(`/messages/${channel_name}`, {body: value})
             }

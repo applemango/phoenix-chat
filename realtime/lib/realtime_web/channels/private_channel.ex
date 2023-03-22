@@ -1,17 +1,14 @@
-defmodule RealtimeWeb.RoomChannel do
+defmodule RealtimeWeb.PrivateChannel do
   use Phoenix.Channel
 
-  #def join("room:lobby", message, socket) do
-  #  {:ok, socket}
-  #end
-
-  #def join("room:test", message, socket) do
-  #  {:ok, socket}
-  #end
-
-  def join("room:" <> _private_room_id, _params, socket) do
-    {:ok, socket}
-    #{:error, %{reason: "unauthorized"}}
+  def join("private:" <> private_room_id, %{"token" => token}, socket) do
+    {:ok, claims} = RealtimeWeb.Token.verify_and_validate(token)
+    room = claims["room"]
+    if private_room_id == room do
+      {:ok, socket}
+    else
+      {:error, %{reason: "unauthorized"}}
+    end
   end
 
   def handle_in("new_msg", %{"body" => body, "token" => token}, socket) do

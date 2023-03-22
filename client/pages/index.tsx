@@ -16,10 +16,9 @@ import { Room } from '@/components/chat'
 import { RoomsMenu } from '@/components/rooms'
 import useNotification from '@/components/useNotification'
 import { message, room } from '@/lib/msg'
+import { friend } from '@/lib/private'
 
 export default function Home() {
-  const [msg, setMsg] = useState("")
-  const [msgs, setMsgs] = useState<Array<string>>([])
 
   const [rooms, setRooms] = useState<Array<room>>([
     {
@@ -43,13 +42,19 @@ export default function Home() {
   ])
 
   const [auth, login] = useAuth()
+
+  const [privateRoom, setPrivateRoom] = useState<boolean>(false)
   
   const [socket, connected, resetSocket] = useSocket("")
   const [room, setRoom] = useState("lobby")
   const [channel, resetChannel] = useChannel(socket, "lobby")
   const [nchannel, resetNotification] = useNotification(socket, "lobby", ["lobby"])
 
+  const [friends, setFriends] = useState<Array<friend>>([])
+
   useEffect(()=> {
+    if(privateRoom)
+      return
     resetChannel(room)
   },[room])
 
@@ -59,6 +64,17 @@ export default function Home() {
     if(!auth || !auth.a)
       return
     resetSocket(auth.a)
+
+    const a = async () => {
+      const [res, status] = await auth.get("/user/friends")
+      if(!status) return
+      console.log(res.data)
+      if(res.data.length) {
+        const [resA, statusA] = await auth.get(`/user/friends/${res.data[0].user_id}/token`)
+        console.log(resA)
+      }
+      setFriends(res.data)
+    };a()
   },[login])
 
   useEffect(()=> {
@@ -95,15 +111,27 @@ export default function Home() {
   return <div style={{
     display: 'flex',
   }}>
-    <RoomsMenu onChange={(r)=> {
-      setRoom(r.name)
-      setRooms(rs => rs.map((r_, i)=> {
-        if(r_.name != r.name) 
+    <RoomsMenu onChange={async (d: any, t)=> {
+      if(!t) {
+        setPrivateRoom(false)
+        setRoom(d.name)
+        setRooms(rs => rs.map((r_, i)=> {
+          if(r_.name != d.name) 
+            return r_
+          r_.notification = 0
           return r_
-        r_.notification = 0
-        return r_
-      }))
-    }} room={room} rooms={rooms} />
+        }))
+        return
+      }
+      if(!auth)
+        return
+      const [res, status] = await auth.get(`/user/friends/${d.user_id}/token`)
+      if(!status)
+        return
+      setPrivateRoom(true)
+      setRoom(d.room)
+      resetChannel(d.room, res.data.token)
+    }} users={friends} room={room} rooms={rooms} />
     <Room auth={auth} channel={channel} channel_name={room} room={"new_msg"} />
   </div>
 }
