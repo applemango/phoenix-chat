@@ -16,7 +16,8 @@ import { Room } from '@/components/chat'
 import { RoomsMenu } from '@/components/rooms'
 import useNotification from '@/components/useNotification'
 import { message, room } from '@/lib/msg'
-import { friend } from '@/lib/private'
+import { friend, friendsReq } from '@/lib/private'
+import FriendsMenu from '@/components/friends'
 
 export default function Home() {
   const [rooms, setRooms] = useState<Array<room>>([{name: "lobby",bcolor: '#19A7CE',color: '#F6F1F1',notification: 0},{name: "test",bcolor: '#9E4784',color: '#F6F1F1',notification: 0},{name: "apple",bcolor: '#eee',color: '#555',notification: 0}])
@@ -28,9 +29,12 @@ export default function Home() {
   const [socket, connected, resetSocket] = useSocket("")
   const [room, setRoom] = useState("")
   const [channel, resetChannel] = useChannel(socket, "")
-  const [nchannel, resetNotification] = useNotification(socket, "lobby", ["lobby"])
+  const [notificationChannel, resetNotificationChannel] = useNotification(socket, "lobby", ["lobby"])
+
+  const [friendChannel, resetFriendChannel] = useChannel(socket, "")
 
   const [friends, setFriends] = useState<Array<friend>>([])
+  const [friendsReq, setFriendsReq] = useState<friendsReq | null>(null)
 
   useEffect(()=> {
     if(privateRoom || !room)
@@ -44,17 +48,26 @@ export default function Home() {
     if(!auth || !auth.a)
       return
     resetSocket(auth.a)
-
-    const a = async () => {
-      const [res, status] = await auth.get("/user/friends")
-      setFriends(res.data)
-    };a()
+    const _ = async () => {
+      const a = async () => {
+        const [res, status] = await auth.get("/user/friends")
+        if(!status) return
+        setFriends(res.data)
+      };await a()
+      const b = async () => {
+        const [res, status] = await auth.get("/user/friends/requests")
+        if(!status) return
+        setFriendsReq(res.data)
+      };await b()
+    }
+    _()
   },[login])
 
   useEffect(()=> {
-    if(nchannel || !auth?.r || !socket || !connected)
+    if(notificationChannel || !auth?.r || !socket || !connected)
       return
-    resetNotification(auth.r, (new Array(rooms.length).fill(0).map((_, i)=> rooms[i].name)))
+    resetNotificationChannel(auth.r, (new Array(rooms.length).fill(0).map((_, i)=> rooms[i].name)))
+    resetFriendChannel(auth.rd.sub, auth.r, "friend")
   },[connected])
 
   useEffect(()=> {
@@ -80,7 +93,7 @@ export default function Home() {
           : 1
       return room
     }))
-  },nchannel)
+  },notificationChannel)
 
   return <div style={{
     display: 'flex',
@@ -108,11 +121,23 @@ export default function Home() {
         return
       setPrivateRoom(true)
       setRoom(d.room)
-      resetChannel(d.room, res.data.token)
+      resetChannel(d.room, res.data.token, "private")
     }} users={friends} room={room} rooms={rooms} />
     {!room 
-      ? <div></div>
-      : <Room auth={auth} channel={channel} channel_name={room} room={"new_msg"} />
+      ? <FriendsMenu
+          auth={auth}
+          channel={friendChannel}
+          friends={friends}
+          friendsReq={friendsReq}
+          setFriends={setFriends}
+          setFriendsReq={setFriendsReq}
+        />
+      : <Room
+          auth={auth}
+          channel={channel}
+          channel_name={room}
+          room={"new_msg"}
+        />
     }
   </div>
 }

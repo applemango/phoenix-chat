@@ -25,6 +25,7 @@ export class Auth {
         if (!(a_ && Date.now() >= parseJwt(a_).exp *1000) && a_) {
             return this.token
         }
+        localStorage.removeItem("token")
         return null
     }
     get r() {
@@ -32,6 +33,8 @@ export class Auth {
         if (!(r && Date.now() >= parseJwt(r).exp *1000) && r) {
             return this.refreshToken
         }
+        localStorage.removeItem("refreshToken")
+        localStorage.removeItem("token")
         return null
     }
     set(name: string, pass: string) {
@@ -93,7 +96,7 @@ export class Auth {
         })
         return [res, status]
     }
-    async post(url: string, body: any) {
+    async post(url: string, body: any = {}) {
         if(!this.r) return [false, false]
         if(!this.a) {
             const l = await this.refresh()

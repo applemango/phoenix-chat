@@ -101,6 +101,7 @@ async fn main() -> std::io::Result<()> {
                     .service(
                         web::scope("/friends")
                             .route("", web::get().to(get_friends))
+                            .route("/requests", web::get().to(get_wait_response))
                             .service(
                                 web::scope("/{friend_id}")
                                     .route("/accept", web::post().to(accept_friend))

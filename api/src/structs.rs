@@ -71,3 +71,9 @@ pub struct FriendTokenClaims {
 pub struct FriendTokenResponse {
     pub token: String,
 }
+
+#[derive(Serialize)]
+pub struct FriendWaitResponseResponse {
+    pub request: Vec<FriendsResponse>,
+    pub response: Vec<FriendsResponse>
+}

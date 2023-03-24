@@ -28,13 +28,13 @@ export const RoomsMenu = ({rooms, users, room, onChange}:{
             justifyContent: 'center',
             cursor: 'pointer'
         }} onClick={()=> onChange()}/>
-        <div style={{
+        {!!users.length && <div style={{
             width: 'calc(100% - 12px)',
             height: 2,
             borderRadius: 10,
             backgroundColor: '#0002',
             margin: '8px 6px'
-        }} />
+        }} />}
         {users.map((u, i)=> <div key={i} style={{
             width: 48,
             height: 48,

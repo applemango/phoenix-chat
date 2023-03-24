@@ -1,11 +1,50 @@
-use actix_web::{web, Responder, HttpResponse, HttpRequest};
+use actix_web::{Responder, HttpResponse, HttpRequest};
 use rusqlite::Connection;
 use crate::{structs::*, token::isLogin};
 
 use jwt_simple::prelude::*;
-use crypto::sha2::Sha256;
-use crypto::digest::Digest;
 use uuid::Uuid;
+
+pub async fn get_wait_response(req: HttpRequest) -> impl Responder {
+    let claims = match isLogin(req.clone()).await {
+        Ok(token) => token,
+        Err(_) => return HttpResponse::Unauthorized().body("invalid token"),
+    };
+    let conn = Connection::open("app.db").unwrap();
+
+    let mut stmt = conn.prepare("SELECT room, requester, responser FROM friend WHERE status = 0 and (requester = ?1 or responser = ?1)").unwrap();
+    let rows = stmt.query_map([claims.sub], | row| {
+        Ok(DBFriend{
+            room: row.get(0)?,
+            requester: row.get(1)?,
+            responser: row.get(2)?
+        })
+    }).unwrap();
+
+    let mut req = Vec::new();
+    let mut res = Vec::new();
+
+    for item in rows {
+        if let Ok(item) = item {
+            if item.requester == claims.sub {
+                req.push(FriendsResponse {
+                    room: item.room,
+                    user_id: item.responser
+                })
+            } else {
+                res.push(FriendsResponse {
+                    room: item.room,
+                    user_id: item.requester
+                })
+            }
+        }
+    }
+    let response = FriendWaitResponseResponse {
+        request: req,
+        response: res
+    };
+    HttpResponse::Ok().json(response)
+}
 
 pub async fn get_friends(req: HttpRequest) -> impl Responder {
     let claims = match isLogin(req.clone()).await {
@@ -66,7 +105,7 @@ pub async fn request_friend(req: HttpRequest) -> impl Responder {
             room,
             requester,
             responser,
-            status,
+            status
         )
         VALUES (?1, ?2, ?3, ?4)
     ").unwrap();
