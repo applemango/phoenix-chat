@@ -1,9 +1,9 @@
 use actix_web::{web, Responder, HttpResponse, HttpRequest};
 use rusqlite::Connection;
-use crate::{structs::*, token::isLogin};
+use crate::{structs::*, token::is_login};
 
 pub async fn get_messages(req: HttpRequest) -> impl Responder {
-    let _ = match isLogin(req.clone()).await {
+    let _ = match is_login(req.clone()).await {
         Ok(token) => token,
         Err(_) => return HttpResponse::Unauthorized().body("invalid token"),
     };
@@ -36,7 +36,7 @@ pub async fn get_messages(req: HttpRequest) -> impl Responder {
 }
 
 pub async fn add_message(req: HttpRequest, data: web::Json<AddMessageRequest>) -> impl Responder {
-    let token_data = match isLogin(req.clone()).await {
+    let token_data = match is_login(req.clone()).await {
         Ok(token) => token,
         Err(_) => return HttpResponse::Unauthorized().body("invalid token"),
     };

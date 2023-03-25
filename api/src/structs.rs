@@ -25,7 +25,7 @@ pub struct TokenData {
     pub id: String,
     pub sub: i32,
     pub exp: u64,
-    pub TokenClaims: TokenClaims,
+    pub token_claims: TokenClaims,
 
 }
 

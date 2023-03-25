@@ -1,12 +1,12 @@
 use actix_web::{Responder, HttpResponse, HttpRequest};
 use rusqlite::Connection;
-use crate::{structs::*, token::isLogin};
+use crate::{structs::*, token::is_login};
 
 use jwt_simple::prelude::*;
 use uuid::Uuid;
 
 pub async fn get_wait_response(req: HttpRequest) -> impl Responder {
-    let claims = match isLogin(req.clone()).await {
+    let claims = match is_login(req.clone()).await {
         Ok(token) => token,
         Err(_) => return HttpResponse::Unauthorized().body("invalid token"),
     };
@@ -47,7 +47,7 @@ pub async fn get_wait_response(req: HttpRequest) -> impl Responder {
 }
 
 pub async fn get_friends(req: HttpRequest) -> impl Responder {
-    let claims = match isLogin(req.clone()).await {
+    let claims = match is_login(req.clone()).await {
         Ok(token) => token,
         Err(_) => return HttpResponse::Unauthorized().body("invalid token"),
     };
@@ -82,7 +82,7 @@ pub async fn get_friends(req: HttpRequest) -> impl Responder {
 
 pub async fn request_friend(req: HttpRequest) -> impl Responder {
     let friend_id: i32 = req.clone().match_info().load().unwrap();
-    let claims = match isLogin(req.clone()).await {
+    let claims = match is_login(req.clone()).await {
         Ok(token) => token,
         Err(_) => return HttpResponse::Unauthorized().body("invalid token"),
     };
@@ -122,7 +122,7 @@ pub async fn request_friend(req: HttpRequest) -> impl Responder {
 
 pub async fn accept_friend(req: HttpRequest) -> impl Responder {
     let friend_id: i32 = req.clone().match_info().load().unwrap();
-    let claims = match isLogin(req.clone()).await {
+    let claims = match is_login(req.clone()).await {
         Ok(token) => token,
         Err(_) => return HttpResponse::Unauthorized().body("invalid token"),
     };
@@ -141,7 +141,7 @@ pub async fn accept_friend(req: HttpRequest) -> impl Responder {
 }
 pub async fn reject_friend(req: HttpRequest) -> impl Responder {
     let friend_id: i32 = req.clone().match_info().load().unwrap();
-    let claims = match isLogin(req.clone()).await {
+    let claims = match is_login(req.clone()).await {
         Ok(token) => token,
         Err(_) => return HttpResponse::Unauthorized().body("invalid token"),
     };
@@ -161,7 +161,7 @@ pub async fn reject_friend(req: HttpRequest) -> impl Responder {
 
 pub async fn get_friend_token(req: HttpRequest) -> impl Responder {
     let friend_id: i32 = req.clone().match_info().load().unwrap();
-    let claims = match isLogin(req.clone()).await {
+    let claims = match is_login(req.clone()).await {
         Ok(token) => token,
         Err(_) => return HttpResponse::Unauthorized().body("invalid token"),
     };

@@ -1,17 +1,12 @@
 /*
  * unwrapを多用しているためerrorが出た場合panic!に陥りresponse自体が帰ってこないことが多いですがめんどくさいので使っています
  */
-use actix_web::{get, post, web, App, HttpServer, Responder, HttpResponse, HttpRequest, middleware::Logger};
+use actix_web::{web, App, HttpServer, middleware::Logger};
 use jwt_simple::prelude::*;
-use serde::{Serialize, Deserialize};
 use rusqlite::Connection;
 use uuid::Uuid;
 use env_logger::Env;
 use actix_cors::Cors;
-
-use crypto::sha2::Sha256;
-use crypto::digest::Digest;
-
 
 mod token;
 mod structs;
@@ -89,6 +84,7 @@ async fn main() -> std::io::Result<()> {
             .allow_any_header();
         App::new()
             .wrap(cors)
+            .wrap(Logger::default())
             .service(
                 web::scope("/token")
                     .service(create_token)

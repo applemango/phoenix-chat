@@ -1,7 +1,6 @@
 use crate::structs::*;
-use actix_web::{get, post, web, App, HttpServer, Responder, HttpResponse, HttpRequest, middleware::Logger};
+use actix_web::{get, post, web, Responder, HttpResponse, HttpRequest};
 use jwt_simple::prelude::*;
-use serde::{Serialize, Deserialize};
 use rusqlite::Connection;
 use crypto::sha2::Sha256;
 use crypto::digest::Digest;
@@ -110,7 +109,7 @@ async fn hello(req: HttpRequest) -> impl Responder {
     HttpResponse::Ok().body("Hello world!")
 }
 
-pub async fn isLogin(req: HttpRequest) -> Result<TokenData, ()> {
+pub async fn is_login(req: HttpRequest) -> Result<TokenData, ()> {
     let token = get_token(req);
 
     let token_key = HS256Key::from_bytes(b"secret");
@@ -156,7 +155,7 @@ pub async fn isLogin(req: HttpRequest) -> Result<TokenData, ()> {
         id: uuid,
         sub: sub,
         exp: exp,
-        TokenClaims: TokenClaims {
+        token_claims: TokenClaims {
             refresh: claims.custom.refresh,
         }
     };
