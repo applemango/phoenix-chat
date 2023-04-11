@@ -12,12 +12,14 @@ mod token;
 mod structs;
 mod messages;
 mod private;
+mod file;
 
 use crate::structs::*;
 use crate::token::*;
 use crate::messages::*;
 use crate::messages::add_message;
 use crate::private::*;
+use crate::file::*;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -75,6 +77,16 @@ async fn main() -> std::io::Result<()> {
         )",
         ()
     ).unwrap();
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS message_image (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            location STRING,
+            image_name STRING,
+            user_id INTEGER,
+            FOREIGN KEY(user_id) REFERENCES user (id)
+        )",
+        ()
+    ).unwrap();
     env_logger::init_from_env(Env::default().default_filter_or("info"));
     HttpServer::new(|| {
         let cors = Cors::default()
@@ -110,9 +122,14 @@ async fn main() -> std::io::Result<()> {
             )
             .service(
                 web::scope("/messages")
-                    .route("/{space_name}", web::post().to(add_message))
-                    .route("/{space_name}", web::get().to(get_messages))
+                    .service(
+                        web::scope("/{space_name}")
+                            .route("", web::post().to(add_message))
+                            .route("", web::get().to(get_messages))
+                            .route("/image", web::post().to(post_image))
+                    )
             )
+            .route("/i/${image_id}", web::get())
             .service(hello)
     })
     .bind("0.0.0.0:8081")?.run().await
