@@ -1,4 +1,4 @@
-import { get, post } from "./fetch";
+import { get, optionGet, optionPost, post } from "./fetch";
 import { parseJwt } from "./token";
 
 export class Auth {
@@ -49,7 +49,7 @@ export class Auth {
             header: {
                 Authorization: `Bearer ${this.refreshToken}`
             },
-            data: {}
+            body: {}
         })
         if(!status) return false
         this.token = res.data.token;
@@ -60,7 +60,7 @@ export class Auth {
         if(!(this.username && this.password)) return false
         const [res, status] = await post("/user/register", {
             header: {},
-            data: {
+            body: {
                 username: this.username,
                 password: this.password,
             }
@@ -72,7 +72,7 @@ export class Auth {
         if(!(this.username && this.password)) return false
         const [res, status] = await post("/token/create", {
             header: {},
-            data: {
+            body: {
                 username: this.username,
                 password: this.password,
             }
@@ -83,31 +83,31 @@ export class Auth {
         this.save()
         return true
     }
-    async get(url: string) {
+    async get(url: string, option: optionGet = {
+        header: {}
+    }) {
         if(!this.r) return [false, false]
         if(!this.a) {
             const l = await this.refresh()
             if(!l) return [false, false]
         }
-        const [res, status] = await get(url, {
-            header: {
-                Authorization: `Bearer ${this.a}`
-            }
-        })
+        if(!option.header.Authorization)
+            option.header.Authorization = `Bearer ${this.a}`
+        const [res, status] = await get(url, option)
         return [res, status]
     }
-    async post(url: string, body: any = {}) {
+    async post(url: string, option: optionPost = {
+        header: {},
+        body: {}
+    }) {
         if(!this.r) return [false, false]
         if(!this.a) {
             const l = await this.refresh()
             if(!l) return [false, false]
         }
-        const [res, status] = await post(url, {
-            header: {
-                Authorization: `Bearer ${this.a}`
-            },
-            data: body
-        })
+        if(!option.header.Authorization)
+            option.header.Authorization = `Bearer ${this.a}`
+        const [res, status] = await post(url, option)
         return [res, status]
     }
     load() {

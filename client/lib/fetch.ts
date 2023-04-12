@@ -1,13 +1,14 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
 import { url } from "./url";
 
-type optionGet = {
+export type optionGet = {
     header: any;
 }
 
-type optionPost = {
+export type optionPost = {
     header: any;
-    data: any;
+    body: any;
+    is_json?: boolean
 }
 
 export const get = async (link: string, options: optionGet = {
@@ -29,13 +30,14 @@ export const get = async (link: string, options: optionGet = {
 
 export const post = async (link: string, options: optionPost = {
     header: {},
-    data: {},
+    body: {},
 }) => {
     const u = url(link);
-    options.header["Content-Type"] = "application/json";
+    if(!options.header["Content-Type"] && options.header?.is_json !== false)
+        options.header["Content-Type"] = "application/json";
     try {
         const res = await axios.post(
-            u, JSON.stringify(options.data), {
+            u, options.is_json ? JSON.stringify(options.body) : options.body, {
                 headers: options.header
             }
         )

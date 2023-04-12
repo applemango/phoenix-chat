@@ -1,7 +1,8 @@
 import { Auth } from "@/lib/auth"
+import { post } from "@/lib/fetch"
 import { message } from "@/lib/msg"
 import { Channel } from "phoenix"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import useChannelOnEvent from "./useChannelOnEvent"
 
 export const SingleColorIcon = ({id, size = 38}:{
@@ -49,21 +50,50 @@ export const Chat = ({messages, style}:{
         {messages.map((msg, i) => <Message key={i} message={msg} />)}
     </div>
 }
-export const Input = ({value, onChange, onSubmit, style}:{
+export const Input = ({value, onChange, onPostImage, onSubmit, style}:{
     value: string,
     onChange: (value: string) => void,
-    onSubmit: (value: string) => void,
+    onPostImage: (file: File) => any,
+    onSubmit: (value: string, file_name: string) => void,
     style?: {
         container: React.CSSProperties,
         element: React.CSSProperties
     }
 }) => {
+    const ref = useRef<any>(null)
+    const [file_name, setFileName] = useState("")
     return <div style={style?.container}>
+        <button style={{
+            width: 30,
+            height: 30,
+            backgroundColor: '#eee',
+            borderRadius: '100%',
+            border: 'none',
+            margin: '0 6px',
+            cursor: 'pointer'
+        }} onClick={()=> {
+            ref?.current?.click()
+        }}>
+        </button>
+        <input style={{
+            display: 'none'
+        }} ref={ref} type="file" onChange={async (e: any)=> {
+            const file = e.target.files[0]
+            const file_name = await onPostImage(file)
+            setFileName(file_name)
+            /*const file = e.target.files[0]
+            const [res, status] = await post("/", {
+                data: file,
+                header: {},
+                is_json: false
+            })
+            console.log(file)*/
+        }} />
         <textarea style={style?.element} value={value} onChange={(e: any)=> {
             const value = e.target.value
             if(e.target.value.slice(-1) == "\n") {
                 onChange("")
-                onSubmit(value.slice(0,-1))
+                onSubmit(value.slice(0,-1), file_name)
                 return
             }
             onChange(e.target.value)
@@ -129,8 +159,17 @@ export const Room = ({auth, channel, room, channel_name}:{
             }
             channel.push(room, {body: value, token: auth.a})
             if(auth) {
-                await auth.post(`/messages/${channel_name}`, {body: value})
+                await auth.post(`/messages/${channel_name}`, {body: {body: value}, header:{}})
             }
+        }} onPostImage={async (file)=> {
+            if(!auth || !auth.r) return
+            const [res, status] = await auth.post(`/messages/${channel_name}/image`, {
+                body: file,
+                header: {},
+                is_json: false
+            })
+            console.log(file, res, status)
+            return res.data
         }} />
     </div>
 }

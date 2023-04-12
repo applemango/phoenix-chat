@@ -15,7 +15,7 @@ pub async fn post_image(req: HttpRequest, mut payload: web::Payload) -> HttpResp
     let space_name: String = req.match_info().load().unwrap();
     let image_name = format!("{}.png", Uuid::new_v4().to_string());
 
-    let mut image = File::create(image_name.clone()).unwrap();
+    let mut image = File::create(format!("./static/{}",image_name.clone())).unwrap();
     while let Some(chunk) = payload.try_next().await.unwrap() {
         image.write_all(&chunk).unwrap();
     }
