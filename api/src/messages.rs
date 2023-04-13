@@ -53,5 +53,15 @@ pub async fn add_message(req: HttpRequest, data: web::Json<AddMessageRequest>) -
 
     let _ = stmt.execute([space_name, token_data.sub.to_string(), data.body.clone()]).unwrap();
 
-    HttpResponse::Ok().json("add message")
+    let message = conn.query_row("SELECT id, location, user_id, body FROM message WHERE id = last_insert_rowid()", [], |row| {
+        Ok(DBMessage {
+            id: row.get(0)?,
+            location: row.get(1)?,
+            user_id: row.get(2)?,
+            body: row.get(3)?,
+        })
+    }).unwrap();
+
+    HttpResponse::Ok().json(message)
 }
+

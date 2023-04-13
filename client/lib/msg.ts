@@ -8,5 +8,11 @@ export type room = {
 export type message = {
     body: string,
     location: string,
-    user_id: string
+    user_id: string,
+    files: Array<message_file>
+}
+
+export type message_file = {
+    type: string,
+    path: string
 }

@@ -6,7 +6,7 @@ use crypto::sha2::Sha256;
 use crypto::digest::Digest;
 use uuid::Uuid;
 
-fn get_token(req: HttpRequest) -> String {
+pub fn get_token(req: HttpRequest) -> String {
     return req.headers().get("Authorization").unwrap().to_str().unwrap()[7..].to_string();
 }
 

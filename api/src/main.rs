@@ -17,9 +17,10 @@ mod file;
 use crate::structs::*;
 use crate::token::*;
 use crate::messages::*;
-use crate::messages::add_message;
 use crate::private::*;
 use crate::file::*;
+
+pub static STATIC_FOLDER: &str = "./static";
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -30,6 +31,8 @@ async fn main() -> std::io::Result<()> {
     let access =  token_key.authenticate(claims).unwrap();
     println!("example token: {}", access);
     println!("example uuid: {}", Uuid::new_v4().to_string());
+
+    println!("example url token: {}", get_url_token("2937b971-94fe-4e35-a534-ca30c641f77d.png".to_string()));
 
     let conn = Connection::open("app.db").unwrap();
     conn.execute(
@@ -83,7 +86,9 @@ async fn main() -> std::io::Result<()> {
             location STRING,
             image_name STRING,
             user_id INTEGER,
-            FOREIGN KEY(user_id) REFERENCES user (id)
+            message_id INTEGER,
+            FOREIGN KEY(user_id) REFERENCES user (id),
+            FOREIGN KEY(message_id) REFERENCES message (id)
         )",
         ()
     ).unwrap();
@@ -126,10 +131,13 @@ async fn main() -> std::io::Result<()> {
                         web::scope("/{space_name}")
                             .route("", web::post().to(add_message))
                             .route("", web::get().to(get_messages))
-                            .route("/image", web::post().to(post_image))
+                            .service(
+                                web::scope("/{message_id}")
+                                    .route("/image", web::post().to(post_image))
+                            )
                     )
             )
-            .route("/i/${image_id}", web::get())
+            .route("/i/{image_id}", web::get().to(get_image))
             .service(hello)
     })
     .bind("0.0.0.0:8081")?.run().await

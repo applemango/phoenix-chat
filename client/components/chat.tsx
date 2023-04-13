@@ -50,54 +50,104 @@ export const Chat = ({messages, style}:{
         {messages.map((msg, i) => <Message key={i} message={msg} />)}
     </div>
 }
-export const Input = ({value, onChange, onPostImage, onSubmit, style}:{
+export const Input = ({value, onChange, onPostImage, onSubmit}:{
     value: string,
     onChange: (value: string) => void,
-    onPostImage: (file: File) => any,
-    onSubmit: (value: string, file_name: string) => void,
-    style?: {
-        container: React.CSSProperties,
-        element: React.CSSProperties
-    }
+    onPostImage: (file: File, id: number) => any,
+    onSubmit: (value: string) => any,
 }) => {
     const ref = useRef<any>(null)
-    const [file_name, setFileName] = useState("")
-    return <div style={style?.container}>
-        <button style={{
-            width: 30,
-            height: 30,
-            backgroundColor: '#eee',
-            borderRadius: '100%',
-            border: 'none',
-            margin: '0 6px',
-            cursor: 'pointer'
-        }} onClick={()=> {
-            ref?.current?.click()
+    const [files, setFiles] = useState<Array<File>>([])
+    const [image_preview, setImagePreview] = useState<Array<string>>([])
+    return <div style={{
+        width: '100%',
+        backgroundColor: '#fff',
+        borderTop: '1px solid #eee',
+        padding: '8px 16px'
+    }}>
+        <div style={{
+            display: 'flex',
         }}>
-        </button>
-        <input style={{
-            display: 'none'
-        }} ref={ref} type="file" onChange={async (e: any)=> {
-            const file = e.target.files[0]
-            const file_name = await onPostImage(file)
-            setFileName(file_name)
-            /*const file = e.target.files[0]
-            const [res, status] = await post("/", {
-                data: file,
-                header: {},
-                is_json: false
-            })
-            console.log(file)*/
-        }} />
-        <textarea style={style?.element} value={value} onChange={(e: any)=> {
-            const value = e.target.value
-            if(e.target.value.slice(-1) == "\n") {
-                onChange("")
-                onSubmit(value.slice(0,-1), file_name)
-                return
-            }
-            onChange(e.target.value)
-        }} placeholder='say something' />
+            {image_preview.map((image, i) => <div key={i}>
+                <img style={{
+                    width: 100,
+                    height: 100,
+                    borderRadius: 4,
+                    marginBottom: 8,
+                    marginRight: 8,
+                    objectFit: 'cover'
+                }} src={image} />
+            </div>)}
+        </div>
+        <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+        }}>
+            <button style={{
+                width: 30,
+                height: 30,
+                backgroundColor: '#eee',
+                borderRadius: '100%',
+                border: 'none',
+                margin: '0 6px',
+                cursor: 'pointer'
+            }} onClick={()=> {
+                ref?.current?.click()
+            }}>
+            </button>
+            <input style={{
+                display: 'none'
+            }} ref={ref} multiple type="file" onChange={async (e: any)=> {
+                const files_ = e.target.files
+                setFiles(files_)
+                setImagePreview(()=> {
+                    const urls: any = []
+                    for (let i = 0; i < files_.length; i++) {
+                        const file = files_[i];
+                        urls.push(window.URL.createObjectURL(file))
+                    }
+                    return urls
+                })
+                console.log(files_)
+                //const file_name = await onPostImage(file)
+                //setFileName(file_name)
+                /*const file = e.target.files[0]
+                const [res, status] = await post("/", {
+                    data: file,
+                    header: {},
+                    is_json: false
+                })
+                console.log(file)*/
+            }} />
+            <textarea style={{
+                height: 64,
+                width: "96%",
+                fontSize: 32,
+                backgroundColor: '#fff',
+                border: '1px solid #eee',
+                padding: '8px 16px',
+                borderRadius: 12,
+                resize: "none"
+            }} value={value} onChange={async (e: any)=> {
+                const value = e.target.value
+                if(e.target.value.slice(-1) == "\n") {
+                    onChange("")
+                    const res = await onSubmit(value.slice(0,-1))
+                    if(!res?.id)
+                        return
+                    for (let i = 0; i < files.length; i++) {
+                        const file = files[i];
+                        await onPostImage(file, res.id)
+                    }
+                    setFiles([])
+                    setImagePreview([])
+                    console.log(res)
+                    return
+                }
+                onChange(e.target.value)
+            }} placeholder='say something' />
+        </div>
     </div>
 }
 export const Room = ({auth, channel, room, channel_name}:{
@@ -128,42 +178,21 @@ export const Room = ({auth, channel, room, channel_name}:{
     }}>
         <Chat style={{
             width: '100%',
-            height: "calc(100vh - 100px)",
+            height: '100%',
             overflowY: 'auto',
         }} messages={messages} />
-        <Input style={{
-            container: {
-                height: 80,
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: '#fff',
-                borderTop: '1px solid #eee'
-            },
-            element: {
-                height: 64,
-                width: "96%",
-                fontSize: 32,
-                backgroundColor: '#fff',
-                border: '1px solid #eee',
-                padding: '8px 16px',
-                borderRadius: 12,
-                resize: "none"
-            }
-        }} value={input} onChange={setInput} onSubmit={async (value)=> {
-            if(!(channel && value && auth)) return
+        <Input value={input} onChange={setInput} onSubmit={async (value)=> {
+            if(!(channel && value && auth)) return null
             if(!auth.a) {
                 const res = await auth.refresh()
-                if(!(res && auth.a)) return
+                if(!(res && auth.a)) return null
             }
             channel.push(room, {body: value, token: auth.a})
-            if(auth) {
-                await auth.post(`/messages/${channel_name}`, {body: {body: value}, header:{}})
-            }
-        }} onPostImage={async (file)=> {
+            const [res, status] = await auth.post(`/messages/${channel_name}`, {body: {body: value}, header:{}})
+            return res.data
+        }} onPostImage={async (file, id)=> {
             if(!auth || !auth.r) return
-            const [res, status] = await auth.post(`/messages/${channel_name}/image`, {
+            const [res, status] = await auth.post(`/messages/${channel_name}/${id}/image`, {
                 body: file,
                 header: {},
                 is_json: false
