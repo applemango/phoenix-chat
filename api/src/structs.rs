@@ -41,13 +41,39 @@ pub struct AddMessageRequest {
     pub body: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct DBMessage {
     pub id: i32,
     pub location: String,
     pub user_id: i32,
     pub body: String,
 }
+
+#[derive(Serialize)]
+pub struct DBMessageImage {
+    pub id: i32,
+    pub location: String,
+    pub path: String,
+    pub user_id: i32,
+    pub message_id: i32
+}
+
+#[derive(Serialize)]
+pub struct MessageFile {
+    pub file_type: String,
+    pub path: String,
+    pub token: String
+}
+
+#[derive(Serialize)]
+pub struct MessageResult {
+    pub id: i32,
+    pub location: String,
+    pub user_id: i32,
+    pub body: String,
+    pub files: Vec<MessageFile>
+}
+
 
 #[derive(Serialize)]
 pub struct DBFriend {

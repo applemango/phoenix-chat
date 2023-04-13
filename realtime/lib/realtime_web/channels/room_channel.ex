@@ -7,7 +7,7 @@ defmodule RealtimeWeb.RoomChannel do
 
   #def join("room:test", message, socket) do
   #  {:ok, socket}
-  #end
+  #en
 
   def join("room:" <> _private_room_id, _params, socket) do
     {:ok, socket}

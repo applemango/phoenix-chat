@@ -4,6 +4,7 @@ import { message } from "@/lib/msg"
 import { Channel } from "phoenix"
 import { useEffect, useRef, useState } from "react"
 import useChannelOnEvent from "./useChannelOnEvent"
+import { url } from "@/lib/url"
 
 export const SingleColorIcon = ({id, size = 38}:{
     id: number | string,
@@ -20,7 +21,7 @@ export const SingleColorIcon = ({id, size = 38}:{
 }
 
 export const Message = ({message}:{
-    message: message
+    message: message,
 }) => {
     return <div style={{
         display: 'flex',
@@ -36,6 +37,13 @@ export const Message = ({message}:{
                 fontWeight: 'bold'
             }}>{message.user_id}</p>
             <p>{message.body}</p>
+            <div>
+                {message.files?.map((img, i)=> <div key={i}>
+                    <img style={{
+                        width: '80%'
+                    }} src={url(`/i/${img.path}?token=${img.token}`)} />
+                </div>)}
+            </div>
         </div>
     </div>
 }

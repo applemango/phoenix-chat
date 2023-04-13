@@ -1,6 +1,6 @@
 use actix_web::{web, Responder, HttpResponse, HttpRequest};
 use rusqlite::Connection;
-use crate::{structs::*, token::is_login};
+use crate::{structs::*, token::is_login, file::get_url_token};
 
 pub async fn get_messages(req: HttpRequest) -> impl Responder {
     let _ = match is_login(req.clone()).await {
@@ -9,9 +9,7 @@ pub async fn get_messages(req: HttpRequest) -> impl Responder {
     };
     let space_name: String = req.match_info().load().unwrap();
     let conn = Connection::open("app.db").unwrap();
-    let mut stmt = conn.prepare("
-        SELECT id, location, user_id, body FROM message WHERE location = ?1
-    ").unwrap();
+    let mut stmt = conn.prepare("SELECT id, location, user_id, body FROM message WHERE location = ?1").unwrap();
     let rows = stmt.query_map([space_name.clone()], |row| {
         Ok(DBMessage {
             id: row.get(0)?,
@@ -22,15 +20,35 @@ pub async fn get_messages(req: HttpRequest) -> impl Responder {
     }).unwrap();
     let mut messages = Vec::new();
     for item in rows {
-        messages.push(match item {
-            Ok(message) => message,
-            Err(_) => DBMessage {
-                id: -1,
-                location: space_name.clone(),
-                user_id: -1,
-                body: "error".to_string(),
-            },
-        });
+        if let Ok(message) = item {
+            let mut stmt = conn.prepare("SELECT id, location, image_name, user_id, message_id FROM message_image WHERE message_id = ?1").unwrap();
+            let rows = stmt.query_map([message.id], |row| {
+                Ok(DBMessageImage {
+                    id: row.get(0)?,
+                    location: row.get(1)?,
+                    path: row.get(2)?,
+                    user_id: row.get(3)?,
+                    message_id: row.get(4)?
+                })
+            }).unwrap();
+            let mut images = Vec::new();
+            for image in rows {
+                if let Ok(image) = image {
+                    images.push(MessageFile {
+                        file_type: "image/png".to_string(),
+                        path: image.path.clone(),
+                        token: get_url_token(image.path)
+                    });
+                }
+            }
+            messages.push(MessageResult {
+                id: message.id,
+                location: message.location,
+                user_id: message.user_id,
+                body: message.body,
+                files: images
+            });
+        }
     }
     HttpResponse::Ok().json(messages)
 }

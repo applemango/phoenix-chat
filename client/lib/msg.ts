@@ -14,5 +14,6 @@ export type message = {
 
 export type message_file = {
     type: string,
-    path: string
+    path: string,
+    token: string
 }
