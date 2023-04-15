@@ -25,6 +25,11 @@ pub struct Queries {
     pub token: String,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct UploadImageResponse {
+    pub token: String,
+    pub file: String
+}
 
 pub async fn post_image(req: HttpRequest, mut payload: web::Payload) -> HttpResponse {
     let token_data = match is_login(req.clone()).await {
@@ -42,7 +47,12 @@ pub async fn post_image(req: HttpRequest, mut payload: web::Payload) -> HttpResp
     let conn = Connection::open("app.db").unwrap();
     let mut stmt = conn.prepare("INSERT INTO message_image ( location, user_id, image_name, message_id ) VALUES (?1, ?2, ?3, ?4 )").unwrap();
     let _ = stmt.execute([space_name, token_data.sub.to_string(), image_name.clone(), message_id]).unwrap();
-    HttpResponse::Ok().body(image_name)
+
+    let token = get_url_token(image_name.clone());
+    HttpResponse::Ok().json(UploadImageResponse {
+        token,
+        file: image_name
+    })
 }
 
 pub fn get_url_token(file_name: String) -> String {

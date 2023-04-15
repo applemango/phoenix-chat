@@ -58,11 +58,12 @@ export const Chat = ({messages, style}:{
         {messages.map((msg, i) => <Message key={i} message={msg} />)}
     </div>
 }
-export const Input = ({value, onChange, onPostImage, onSubmit}:{
+export const Input = ({value, onChange, onPostImage, onSubmit, onPush}:{
     value: string,
     onChange: (value: string) => void,
     onPostImage: (file: File, id: number) => any,
     onSubmit: (value: string) => any,
+    onPush: (body: string, images: object[]) => void,
 }) => {
     const ref = useRef<any>(null)
     const [files, setFiles] = useState<Array<File>>([])
@@ -144,10 +145,20 @@ export const Input = ({value, onChange, onPostImage, onSubmit}:{
                     const res = await onSubmit(value.slice(0,-1))
                     if(!res?.id)
                         return
+                    const images_id = []
                     for (let i = 0; i < files.length; i++) {
                         const file = files[i];
-                        await onPostImage(file, res.id)
+                        console.log(file)
+                        const [id, token] = await onPostImage(file, res.id)
+                        images_id.push(
+                            {
+                                path: id,
+                                token: token
+                            }
+                        )
                     }
+                    console.log(images_id)
+                    onPush(value.slice(0, -1), images_id)
                     setFiles([])
                     setImagePreview([])
                     console.log(res)
@@ -166,6 +177,7 @@ export const Room = ({auth, channel, room, channel_name}:{
 }) => {
     const [input, setInput] = useState("")
     const [messages, setMessages] = useState<Array<message>>([])
+    const ref = useRef<any>(null)
     useChannelOnEvent(room, msg => {
         setMessages((msgs) => [...msgs, msg])
         console.log(msg)
@@ -177,6 +189,15 @@ export const Room = ({auth, channel, room, channel_name}:{
         console.log(res.data)
         setMessages(res.data)
     };a()},[channel])
+    useEffect(()=> {
+        if(!ref.current)
+            return
+        ref.current.scrollBy({
+            top: 99999,
+            left: 0,
+            behavior: "smooth"
+        })
+    },[messages])
     return <div style={{
         display: 'flex',
         flexDirection: 'column',
@@ -184,18 +205,32 @@ export const Room = ({auth, channel, room, channel_name}:{
         height: '100vh',
         width: '100%',
     }}>
-        <Chat style={{
+        {/*<Chat style={{
             width: '100%',
             height: '100%',
             overflowY: 'auto',
-        }} messages={messages} />
-        <Input value={input} onChange={setInput} onSubmit={async (value)=> {
+        }} messages={messages} />*/}
+        <div ref={ref} style={{
+            padding: 12,
+            width: '100%',
+            height: '100%',
+            overflowY: 'auto',
+        }}>
+            {messages.map((msg, i) => <Message key={i} message={msg} />)}
+        </div>
+        <Input value={input} onChange={setInput} onPush={async (body: string, images: object[])=> {
+            if(!channel || !auth) return
+            if(!auth.a) {
+                const res = await auth.refresh()
+                if(!(res && auth.a)) return null
+            }
+            channel.push(room, {body: body, token: auth.a, image: images})
+        }} onSubmit={async (value)=> {
             if(!(channel && value && auth)) return null
             if(!auth.a) {
                 const res = await auth.refresh()
                 if(!(res && auth.a)) return null
             }
-            channel.push(room, {body: value, token: auth.a})
             const [res, status] = await auth.post(`/messages/${channel_name}`, {body: {body: value}, header:{}})
             return res.data
         }} onPostImage={async (file, id)=> {
@@ -206,7 +241,7 @@ export const Room = ({auth, channel, room, channel_name}:{
                 is_json: false
             })
             console.log(file, res, status)
-            return res.data
+            return [res.data.file, res.data.token]
         }} />
     </div>
 }
