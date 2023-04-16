@@ -40,9 +40,12 @@ export const RoomsMenu = ({rooms, users, room, onChange}:{
             height: 48,
             marginLeft: 6,
             marginRight: 6,
-            cursor: 'pointer'
+            cursor: 'pointer',
+            border: room == u.room ? '3px solid #fff' : 'none',
+            outline: room == u.room ? '4px solid #404258' : 'none',
+            borderRadius: 4
         }} onClick={()=> onChange(u, true)}>
-            <SingleColorIcon size={48} id={u.user_id} />
+            <SingleColorIcon size={room == u.room ? 42 : 48} id={u.user_id} />
         </div>)}
         <div style={{
             width: 'calc(100% - 12px)',
@@ -60,7 +63,8 @@ export const RoomsMenu = ({rooms, users, room, onChange}:{
             alignItems: 'center',
             justifyContent: 'center',
             borderRadius: 4,
-            border: room == r.name ? '3px solid #404258' : 'none',
+            border: room == r.name ? '3px solid #fff' : 'none',
+            outline: room == r.name ? '4px solid #404258' : 'none',
             cursor: 'pointer',
             position: 'relative'
         }} onClick={()=> onChange(r, false)}>

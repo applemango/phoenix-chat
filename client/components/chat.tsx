@@ -5,6 +5,8 @@ import { Channel } from "phoenix"
 import { useEffect, useRef, useState } from "react"
 import useChannelOnEvent from "./useChannelOnEvent"
 import { url } from "@/lib/url"
+import c from "./chat.module.scss"
+import InfiniteScroll from "react-infinite-scroller"
 
 export const SingleColorIcon = ({id, size = 38}:{
     id: number | string,
@@ -16,16 +18,17 @@ export const SingleColorIcon = ({id, size = 38}:{
         backgroundColor: color,
         width: size,
         height: size,
-        borderRadius: '100%'
+        borderRadius: 4
     }} />
 }
 
 export const Message = ({message}:{
     message: message,
 }) => {
-    return <div style={{
+    return <div className={c.message} style={{
         display: 'flex',
-        padding: 2
+        padding: '8px 16px',
+        paddingBottom: 32,
     }}>
         <div style={{
             marginRight: 10
@@ -37,17 +40,23 @@ export const Message = ({message}:{
                 fontWeight: 'bold'
             }}>{message.user_id}</p>
             <p>{message.body}</p>
-            <div>
+            <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+            }}>
                 {message.files?.map((img, i)=> <div key={i}>
                     <img style={{
-                        width: '80%'
+                        height: 180,
+                        borderRadius: 4,
+                        marginRight: 4,
+                        marginTop: 4
                     }} src={url(`/i/${img.path}?token=${img.token}`)} />
                 </div>)}
             </div>
         </div>
     </div>
 }
-
+/*
 export const Chat = ({messages, style}:{
     messages: Array<message>,
     style?: React.CSSProperties,
@@ -58,6 +67,7 @@ export const Chat = ({messages, style}:{
         {messages.map((msg, i) => <Message key={i} message={msg} />)}
     </div>
 }
+*/
 export const Input = ({value, onChange, onPostImage, onSubmit, onPush}:{
     value: string,
     onChange: (value: string) => void,
@@ -76,10 +86,10 @@ export const Input = ({value, onChange, onPostImage, onSubmit, onPush}:{
     }}>
         <div style={{
             display: 'flex',
+            flexWrap: 'wrap',
         }}>
             {image_preview.map((image, i) => <div key={i}>
                 <img style={{
-                    width: 100,
                     height: 100,
                     borderRadius: 4,
                     marginBottom: 8,
@@ -118,16 +128,6 @@ export const Input = ({value, onChange, onPostImage, onSubmit, onPush}:{
                     }
                     return urls
                 })
-                console.log(files_)
-                //const file_name = await onPostImage(file)
-                //setFileName(file_name)
-                /*const file = e.target.files[0]
-                const [res, status] = await post("/", {
-                    data: file,
-                    header: {},
-                    is_json: false
-                })
-                console.log(file)*/
             }} />
             <textarea style={{
                 height: 64,
@@ -157,11 +157,9 @@ export const Input = ({value, onChange, onPostImage, onSubmit, onPush}:{
                             }
                         )
                     }
-                    console.log(images_id)
                     onPush(value.slice(0, -1), images_id)
                     setFiles([])
                     setImagePreview([])
-                    console.log(res)
                     return
                 }
                 onChange(e.target.value)
@@ -177,6 +175,7 @@ export const Room = ({auth, channel, room, channel_name}:{
 }) => {
     const [input, setInput] = useState("")
     const [messages, setMessages] = useState<Array<message>>([])
+    const [page, setPage] = useState(2)
     const ref = useRef<any>(null)
     useChannelOnEvent(room, msg => {
         setMessages((msgs) => [...msgs, msg])
@@ -186,18 +185,18 @@ export const Room = ({auth, channel, room, channel_name}:{
         if(!auth) return
         const [res, status] = await auth.get(`/messages/${channel_name}`)
         if(!status) return
-        console.log(res.data)
-        setMessages(res.data)
+        setMessages(res.data.reverse())
+        setPage(2)
     };a()},[channel])
-    useEffect(()=> {
-        if(!ref.current)
-            return
-        ref.current.scrollBy({
-            top: 99999,
-            left: 0,
-            behavior: "smooth"
-        })
-    },[messages])
+    //useEffect(()=> {
+    //    if(!ref.current)
+    //        return
+    //    ref.current.scrollBy({
+    //        top: 99999,
+    //        left: 0,
+    //        behavior: "smooth"
+    //    })
+    //},[messages])
     return <div style={{
         display: 'flex',
         flexDirection: 'column',
@@ -211,12 +210,29 @@ export const Room = ({auth, channel, room, channel_name}:{
             overflowY: 'auto',
         }} messages={messages} />*/}
         <div ref={ref} style={{
-            padding: 12,
+            //padding: 12,
             width: '100%',
             height: '100%',
             overflowY: 'auto',
         }}>
-            {messages.map((msg, i) => <Message key={i} message={msg} />)}
+            <InfiniteScroll
+                pageStart={2}
+                loadMore={async () => {
+                    if(!auth) return
+                    const [res, status] = await auth.get(`/messages/${channel_name}?page=${page}`)
+                    if(!status) return
+                    setMessages((msgs) => [...res.data.filter((msg: message)=> msg.id != -1 ).reverse(), ...msgs])
+                    setPage((page) => page+1)
+                    if(res.data.length == 0) return setPage(-1)
+                }}
+                hasMore={page>=0}
+                useWindow={false}
+                isReverse={true}
+            >
+                <div>
+                    {messages.map((msg, i) => <Message key={i} message={msg} />)}
+                </div>
+            </InfiniteScroll>
         </div>
         <Input value={input} onChange={setInput} onPush={async (body: string, images: object[])=> {
             if(!channel || !auth) return

@@ -1,16 +1,43 @@
 use actix_web::{web, Responder, HttpResponse, HttpRequest};
 use rusqlite::Connection;
+use serde::Deserialize;
 use crate::{structs::*, token::is_login, file::get_url_token};
 
-pub async fn get_messages(req: HttpRequest) -> impl Responder {
+#[derive(Deserialize, Clone)]
+pub struct Queries {
+    pub start: Option<i32>,
+    pub end: Option<i32>,
+    pub limit: Option<i32>,
+    pub page: Option<i32>,
+}
+
+pub async fn get_messages(req: HttpRequest, q: web::Query<Queries>) -> impl Responder {
     let _ = match is_login(req.clone()).await {
         Ok(token) => token,
         Err(_) => return HttpResponse::Unauthorized().body("invalid token"),
     };
+    
     let space_name: String = req.match_info().load().unwrap();
+    let limit;
+    if let Some(l) = q.limit {
+        limit = l
+    } else if let (Some(s), Some(e)) = (q.start, q.end) {
+        limit = e - s
+    } else {
+        limit = 3
+    }
+    let offset;
+    if let Some(s) = q.start {
+        offset = s
+    } else if let Some(p) = q.page {
+        offset = (p - 1) * limit
+    } else {
+        offset = 0
+    }
+
     let conn = Connection::open("app.db").unwrap();
-    let mut stmt = conn.prepare("SELECT id, location, user_id, body FROM message WHERE location = ?1").unwrap();
-    let rows = stmt.query_map([space_name.clone()], |row| {
+    let mut stmt = conn.prepare("SELECT id, location, user_id, body FROM message WHERE location = ?1 ORDER BY id DESC LIMIT ?2 OFFSET ?3").unwrap();
+    let rows = stmt.query_map([space_name.clone(), limit.to_string(), offset.to_string()], |row| {
         Ok(DBMessage {
             id: row.get(0)?,
             location: row.get(1)?,
@@ -48,6 +75,14 @@ pub async fn get_messages(req: HttpRequest) -> impl Responder {
                 body: message.body,
                 files: images
             });
+        } else {
+            messages.push(MessageResult {
+                id: -1,
+                location: "".to_string(),
+                user_id: -1,
+                body: "".to_string(),
+                files: Vec::new()
+            })
         }
     }
     HttpResponse::Ok().json(messages)
